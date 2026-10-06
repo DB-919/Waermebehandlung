@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Wärmezeit">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Wärmezeit</title>
+  <style>
+    :root{
+      --bg:#f4f6f8; --card:#ffffff; --text:#101828; --muted:#667085;
+      --line:#e4e7ec; --blue:#2563eb; --blue2:#1d4ed8; --soft:#eff4ff;
+      --green:#067647; --amber:#b54708; --red:#b42318; --shadow:0 10px 30px rgba(16,24,40,.08);
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1220; --card:#111827; --text:#f9fafb; --muted:#98a2b3;
+        --line:#263244; --blue:#60a5fa; --blue2:#93c5fd; --soft:#172554;
+        --green:#47cd89; --amber:#fdb022; --red:#f97066; --shadow:0 10px 30px rgba(0,0,0,.28);
+      }
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+      min-height:100vh;-webkit-font-smoothing:antialiased
+    }
+    .wrap{max-width:760px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 12px calc(28px + env(safe-area-inset-bottom))}
+    header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 2px 14px}
+    h1{font-size:26px;line-height:1.05;margin:0;letter-spacing:-.03em}
+    .sub{font-size:13px;color:var(--muted);margin-top:4px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);margin-bottom:12px}
+    h2{font-size:18px;margin:0}
+    .label{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+    input,select,button{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:12px;min-height:44px}
+    input,select{width:100%;padding:10px 11px}
+    button{padding:9px 12px;font-weight:750;cursor:pointer}
+    button.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+    button.ghost{background:transparent}
+    button.danger{color:var(--red);background:transparent}
+    button:disabled{opacity:.4}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .mode{display:flex;gap:8px}
+    .mode button{flex:1}
+    .mode button.active{background:var(--soft);border-color:#b2ccff;color:var(--blue)}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .toolbar > *{flex:1 1 140px}
+    .stepsHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:8px}
+    .step{border:1px solid var(--line);border-radius:15px;padding:11px;margin-top:10px;background:color-mix(in srgb,var(--card) 94%,var(--soft) 6%)}
+    .stepHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+    .stepTitle{font-weight:800}
+    .mini{display:flex;gap:6px}
+    .mini button{min-width:38px;min-height:36px;padding:6px 9px}
+    .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:8px}
+    .durgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .field span{display:block;font-size:11px;font-weight:700;color:var(--muted);margin:0 0 5px 2px}
+    .summary{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .box{background:var(--soft);border-radius:14px;padding:12px}
+    .box .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800}
+    .box .v{font-size:18px;font-weight:850;line-height:1.2;margin-top:5px}
+    .box.big{grid-column:1/-1;text-align:center}
+    .box.big .v{font-size:34px;font-variant-numeric:tabular-nums}
+    .timelineRow{display:grid;grid-template-columns:92px 1fr auto;gap:8px;padding:9px 0;border-top:1px solid var(--line);font-size:13px}
+    .timelineRow:first-child{border-top:0}
+    .timelineTime{font-weight:800;font-variant-numeric:tabular-nums}
+    .timelineDur{color:var(--muted);font-variant-numeric:tabular-nums}
+    .good{color:var(--green)!important}.warn{color:var(--amber)!important}.bad{color:var(--red)!important}
+    dialog{border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--text);max-width:520px;width:calc(100% - 24px);box-shadow:var(--shadow);padding:0}
+    dialog::backdrop{background:rgba(0,0,0,.45)}
+    .dialogBody{padding:18px}
+    .dialogBody h3{margin:0 0 8px;font-size:19px}
+    .dialogBody ol{padding-left:20px;line-height:1.6}
+    .dialogActions{display:flex;justify-content:flex-end;padding:12px 18px 18px}
+    .footer{text-align:center;color:var(--muted);font-size:12px;padding:6px}
+    @media(max-width:520px){
+      .summary{grid-template-columns:1fr}
+      .box.big{grid-column:auto}
+      .row2{grid-template-columns:1fr}
+      .timelineRow{grid-template-columns:88px 1fr auto}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Wärmezeit</h1>
+      <div class="sub">Prozessschritte eingeben – Start und Ende automatisch berechnen</div>
+    </div>
+    <button id="installHelp" class="ghost" type="button">Installieren</button>
+  </header>
+
+  <section class="card">
+    <div class="label">Berechnungsart</div>
+    <div class="mode">
+      <button id="modeEnd" class="active" type="button">Zielzeit vorgeben</button>
+      <button id="modeStart" type="button">Startzeit vorgeben</button>
+    </div>
+
+    <div id="endBlock" style="margin-top:12px">
+      <div class="label">Gewünschtes Prozessende</div>
+      <div class="row2">
+        <input id="endDate" type="date">
+        <input id="endTime" type="time" step="60">
+      </div>
+    </div>
+
+    <div id="startBlock" style="display:none;margin-top:12px">
+      <div class="label">Gewünschter Prozessstart</div>
+      <div class="row2">
+        <input id="startDateIn" type="date">
+        <input id="startTimeIn" type="time" step="60">
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="label">Programme</div>
+    <div class="toolbar">
+      <select id="programSelect" aria-label="Gespeichertes Programm">
+        <option value="">Programm auswählen…</option>
+      </select>
+      <button id="saveProgram" class="ghost" type="button">Speichern</button>
+      <button id="deleteProgram" class="danger" type="button">Löschen</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="stepsHead">
+      <h2>Prozessschritte</h2>
+      <button id="add" class="primary" type="button">+ Schritt</button>
+    </div>
+    <div class="note">Die Gesamtdauer wird ausschließlich aus den eingegebenen Schrittzeiten berechnet.</div>
+    <div id="steps"></div>
+    <div class="toolbar" style="margin-top:10px">
+      <button id="preset" class="ghost" type="button">Beispiel laden</button>
+      <button id="clear" class="danger" type="button">Alle Schritte löschen</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="summary">
+      <div class="box">
+        <div class="k">Gesamtdauer</div>
+        <div id="total" class="v">00:00</div>
+      </div>
+      <div class="box">
+        <div class="k">Schritte</div>
+        <div id="count" class="v">0</div>
+      </div>
+      <div class="box">
+        <div class="k">Start</div>
+        <div id="startOut" class="v">–</div>
+      </div>
+      <div class="box">
+        <div class="k">Ziel / Ende</div>
+        <div id="endOut" class="v">–</div>
+      </div>
+      <div class="box big">
+        <div id="waitLabel" class="k">Wartezeit bis Start</div>
+        <div id="waitOut" class="v">--:--:--</div>
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:10px">
+      <button id="calendar" class="ghost" type="button">Kalenderdatei erzeugen</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="stepsHead"><h2>Zeitplan</h2></div>
+    <div id="timeline"></div>
+  </section>
+
+  <div class="footer">Offline-fähig · Daten bleiben lokal auf diesem Gerät</div>
+</div>
+
+<dialog id="installDialog">
+  <div class="dialogBody">
+    <h3>Auf dem iPhone installieren</h3>
+    <ol>
+      <li>Diese Web-App in <strong>Safari</strong> öffnen.</li>
+      <li>Unten auf <strong>Teilen</strong> tippen.</li>
+      <li><strong>Zum Home-Bildschirm</strong> wählen.</li>
+      <li>Mit <strong>Hinzufügen</strong> bestätigen.</li>
+    </ol>
+    <div class="note">Danach startet Wärmezeit wie eine normale App im Vollbild und funktioniert nach dem ersten Laden auch offline.</div>
+  </div>
+  <div class="dialogActions"><button id="closeDialog" class="primary" type="button">OK</button></div>
+</dialog>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const els = {
+    steps:$('steps'), add:$('add'), preset:$('preset'), clear:$('clear'),
+    total:$('total'), count:$('count'), startOut:$('startOut'), endOut:$('endOut'),
+    waitOut:$('waitOut'), waitLabel:$('waitLabel'), timeline:$('timeline'),
+    modeEnd:$('modeEnd'), modeStart:$('modeStart'),
+    endBlock:$('endBlock'), startBlock:$('startBlock'),
+    endDate:$('endDate'), endTime:$('endTime'),
+    startDateIn:$('startDateIn'), startTimeIn:$('startTimeIn'),
+    programSelect:$('programSelect'), saveProgram:$('saveProgram'), deleteProgram:$('deleteProgram'),
+    calendar:$('calendar'), installHelp:$('installHelp'), installDialog:$('installDialog'),
+    closeDialog:$('closeDialog')
+  };
+
+  const sample = [
+    {action:'Aufheizen',temp:300,h:1,m:30},
+    {action:'Halten',temp:300,h:1,m:0},
+    {action:'Aufheizen',temp:450,h:0,m:45},
+    {action:'Halten',temp:450,h:1,m:0},
+    {action:'Aufheizen',temp:505,h:0,m:45},
+    {action:'Halten',temp:505,h:1,m:0}
+  ];
+
+  let mode='end', steps=[], programs={};
+
+  const pad=n=>String(n).padStart(2,'0');
+  const clone=x=>JSON.parse(JSON.stringify(x));
+  const localDate=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const localTime=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  function combine(dateStr,timeStr){
+    if(!dateStr||!timeStr) return null;
+    const [y,mo,d]=dateStr.split('-').map(Number);
+    const [h,mi]=timeStr.split(':').map(Number);
+    const x=new Date(y,mo-1,d,h,mi,0,0);
+    return isNaN(x)?null:x;
+  }
+  function fmtDateTime(d){
+    if(!d) return '–';
+    return new Intl.DateTimeFormat('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);
+  }
+  function fmtHm(min){
+    min=Math.max(0,Math.round(min));
+    return `${pad(Math.floor(min/60))}:${pad(min%60)}`;
+  }
+  function fmtCountdown(ms){
+    let s=Math.floor(Math.abs(ms)/1000);
+    const days=Math.floor(s/86400); s%=86400;
+    const h=Math.floor(s/3600); s%=3600;
+    const m=Math.floor(s/60); s%=60;
+    return days?`${days} T ${pad(h)}:${pad(m)}:${pad(s)}`:`${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+  function saveState(){
+    try{
+      localStorage.setItem('waermezeit.state',JSON.stringify({
+        mode,steps,
+        endDate:els.endDate.value,endTime:els.endTime.value,
+        startDate:els.startDateIn.value,startTime:els.startTimeIn.value
+      }));
+      localStorage.setItem('waermezeit.programs',JSON.stringify(programs));
+    }catch(e){}
+  }
+
+  function loadState(){
+    const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1); tomorrow.setHours(10,0,0,0);
+    try{
+      const s=JSON.parse(localStorage.getItem('waermezeit.state')||'null');
+      if(s){
+        mode=s.mode||'end'; steps=Array.isArray(s.steps)?s.steps:clone(sample);
+        els.endDate.value=s.endDate||localDate(tomorrow);
+        els.endTime.value=s.endTime||'10:00';
+        els.startDateIn.value=s.startDate||localDate(new Date());
+        els.startTimeIn.value=s.startTime||localTime(new Date());
+      }else{
+        steps=clone(sample);
+        els.endDate.value=localDate(tomorrow); els.endTime.value='10:00';
+        els.startDateIn.value=localDate(new Date()); els.startTimeIn.value=localTime(new Date());
+      }
+      programs=JSON.parse(localStorage.getItem('waermezeit.programs')||'{}')||{};
+    }catch(e){
+      steps=clone(sample); programs={};
+      els.endDate.value=localDate(tomorrow); els.endTime.value='10:00';
+    }
+  }
+
+  function setMode(m){
+    mode=m;
+    els.modeEnd.classList.toggle('active',m==='end');
+    els.modeStart.classList.toggle('active',m==='start');
+    els.endBlock.style.display=m==='end'?'block':'none';
+    els.startBlock.style.display=m==='start'?'block':'none';
+    saveState(); calc();
+  }
+
+  function renderPrograms(){
+    const current=els.programSelect.value;
+    els.programSelect.innerHTML='<option value="">Programm auswählen…</option>';
+    Object.keys(programs).sort((a,b)=>a.localeCompare(b,'de')).forEach(name=>{
+      const o=document.createElement('option'); o.value=name; o.textContent=name; els.programSelect.appendChild(o);
+    });
+    if(programs[current]) els.programSelect.value=current;
+  }
+
+  function renderSteps(){
+    els.steps.innerHTML='';
+    steps.forEach((s,i)=>{
+      const el=document.createElement('div'); el.className='step';
+      el.innerHTML=`
+        <div class="stepHead">
+          <div class="stepTitle">Schritt ${i+1}</div>
+          <div class="mini">
+            <button class="ghost up" type="button" ${i===0?'disabled':''}>↑</button>
+            <button class="ghost down" type="button" ${i===steps.length-1?'disabled':''}>↓</button>
+            <button class="danger del" type="button">×</button>
+          </div>
+        </div>
+        <div class="grid">
+          <div class="field"><span>Aktion</span>
+            <select class="action">
+              ${['Aufheizen','Halten','Abkühlen','Warten','Sonstiges'].map(a=>`<option ${a===s.action?'selected':''}>${a}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><span>Temperatur °C</span><input class="temp" type="number" inputmode="decimal" step="1" value="${esc(s.temp)}"></div>
+        </div>
+        <div class="durgrid">
+          <div class="field"><span>Stunden</span><input class="hours" type="number" inputmode="numeric" min="0" step="1" value="${Number(s.h)||0}"></div>
+          <div class="field"><span>Minuten</span><input class="mins" type="number" inputmode="numeric" min="0" max="59" step="1" value="${Number(s.m)||0}"></div>
+        </div>`;
+      const action=el.querySelector('.action'), temp=el.querySelector('.temp'), hours=el.querySelector('.hours'), mins=el.querySelector('.mins');
+      action.onchange=()=>{steps[i].action=action.value;saveState();calc()};
+      temp.oninput=()=>{steps[i].temp=temp.value;saveState();calc()};
+      hours.oninput=()=>{steps[i].h=Math.max(0,parseInt(hours.value||0));saveState();calc()};
+      mins.oninput=()=>{
+        const v=Math.max(0,Math.min(59,parseInt(mins.value||0)));
+        steps[i].m=v; if(mins.value!=='' && Number(mins.value)!==v) mins.value=v; saveState();calc()
+      };
+      el.querySelector('.del').onclick=()=>{steps.splice(i,1);saveState();renderSteps();calc()};
+      el.querySelector('.up').onclick=()=>{if(i>0){[steps[i-1],steps[i]]=[steps[i],steps[i-1]];saveState();renderSteps();calc()}};
+      el.querySelector('.down').onclick=()=>{if(i<steps.length-1){[steps[i+1],steps[i]]=[steps[i],steps[i+1]];saveState();renderSteps();calc()}};
+      els.steps.appendChild(el);
+    });
+  }
+
+  const totalMinutes=()=>steps.reduce((sum,s)=>sum+(Number(s.h)||0)*60+(Number(s.m)||0),0);
+
+  function calc(){
+    const total=totalMinutes();
+    els.total.textContent=fmtHm(total); els.count.textContent=String(steps.length);
+    let start=null,end=null;
+    if(mode==='end'){
+      end=combine(els.endDate.value,els.endTime.value);
+      if(end) start=new Date(end.getTime()-total*60000);
+    }else{
+      start=combine(els.startDateIn.value,els.startTimeIn.value);
+      if(start) end=new Date(start.getTime()+total*60000);
+    }
+    els.startOut.textContent=fmtDateTime(start); els.endOut.textContent=fmtDateTime(end);
+
+    els.timeline.innerHTML='';
+    if(start && steps.length){
+      let t=new Date(start);
+      steps.forEach((s,i)=>{
+        const dur=(Number(s.h)||0)*60+(Number(s.m)||0), t2=new Date(t.getTime()+dur*60000);
+        const row=document.createElement('div'); row.className='timelineRow';
+        const temp=(s.temp!==''&&s.temp!=null)?` · ${esc(s.temp)} °C`:'';
+        row.innerHTML=`<div class="timelineTime">${localTime(t)}–${localTime(t2)}</div><div>${i+1}. ${esc(s.action)}${temp}</div><div class="timelineDur">${fmtHm(dur)}</div>`;
+        els.timeline.appendChild(row); t=t2;
+      });
+    }else{
+      els.timeline.innerHTML='<div class="note">Noch kein gültiger Zeitplan.</div>';
+    }
+    window.__calc={start,end,total}; updateWait();
+  }
+
+  function updateWait(){
+    const c=window.__calc||{};
+    els.waitOut.className='v';
+    if(!c.start){els.waitOut.textContent='--:--:--';return}
+    const now=new Date();
+    if(now<c.start){
+      els.waitLabel.textContent='Wartezeit bis Start'; els.waitOut.textContent=fmtCountdown(c.start-now); els.waitOut.classList.add('good');
+    }else if(c.end && now<c.end){
+      els.waitLabel.textContent='Prozess läuft – Restzeit'; els.waitOut.textContent=fmtCountdown(c.end-now); els.waitOut.classList.add('warn');
+    }else{
+      els.waitLabel.textContent='Prozess beendet seit'; els.waitOut.textContent=fmtCountdown(now-(c.end||c.start)); els.waitOut.classList.add('bad');
+    }
+  }
+
+  function saveProgram(){
+    const name=prompt('Name des Programms:');
+    if(!name) return;
+    programs[name.trim()]=clone(steps); saveState(); renderPrograms(); els.programSelect.value=name.trim();
+  }
+  function deleteProgram(){
+    const name=els.programSelect.value;
+    if(!name) return;
+    if(confirm(`Programm „${name}“ löschen?`)){delete programs[name];saveState();renderPrograms();}
+  }
+  function loadProgram(){
+    const name=els.programSelect.value;
+    if(name && programs[name]){steps=clone(programs[name]);saveState();renderSteps();calc();}
+  }
+
+  function makeCalendar(){
+    const c=window.__calc||{};
+    if(!c.start || !c.end){alert('Bitte zuerst einen gültigen Zeitplan erstellen.');return}
+    const dt=d=>`${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+    const lines=[
+      'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Waermezeit//DE','CALSCALE:GREGORIAN',
+      'BEGIN:VEVENT',`UID:${Date.now()}@waermezeit`,`DTSTAMP:${dt(new Date())}`,
+      `DTSTART:${dt(c.start)}`,`DTEND:${dt(c.end)}`,
+      'SUMMARY:Wärmebehandlung','DESCRIPTION:Start der Wärmebehandlung',
+      'BEGIN:VALARM','TRIGGER:-PT10M','ACTION:DISPLAY','DESCRIPTION:Wärmebehandlung startet in 10 Minuten','END:VALARM',
+      'END:VEVENT','END:VCALENDAR'
+    ].join('\r\n');
+    const blob=new Blob([lines],{type:'text/calendar;charset=utf-8'}), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='Waermebehandlung.ics'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }
+
+  els.add.onclick=()=>{const last=steps[steps.length-1]||{};steps.push({action:'Halten',temp:last.temp??'',h:1,m:0});saveState();renderSteps();calc()};
+  els.preset.onclick=()=>{steps=clone(sample);saveState();renderSteps();calc()};
+  els.clear.onclick=()=>{if(confirm('Alle Prozessschritte löschen?')){steps=[];saveState();renderSteps();calc()}};
+  els.modeEnd.onclick=()=>setMode('end'); els.modeStart.onclick=()=>setMode('start');
+  [els.endDate,els.endTime,els.startDateIn,els.startTimeIn].forEach(x=>x.addEventListener('input',()=>{saveState();calc()}));
+  els.saveProgram.onclick=saveProgram; els.deleteProgram.onclick=deleteProgram; els.programSelect.onchange=loadProgram;
+  els.calendar.onclick=makeCalendar;
+  els.installHelp.onclick=()=>els.installDialog.showModal();
+  els.closeDialog.onclick=()=>els.installDialog.close();
+
+  loadState(); renderPrograms(); renderSteps(); setMode(mode); calc(); setInterval(updateWait,1000);
+
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
